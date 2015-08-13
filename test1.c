@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
 
@@ -254,6 +255,10 @@ int main(int argc, char **argv) {
     args.in=in;
     args.out=out;
 
+    printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
+    printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
+    printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
+    
     /*
      * Find a memory region that supports kernel arguments.
      */
@@ -298,6 +303,14 @@ int main(int argc, char **argv) {
     dispatch_packet->group_segment_size = group_segment_size;
     __atomic_store_n((uint8_t*)(&dispatch_packet->header), (uint8_t)HSA_PACKET_TYPE_KERNEL_DISPATCH, __ATOMIC_RELEASE);
 
+	printf("\n\nheader: %" PRIu16 "\n",dispatch_packet->header);
+	printf("setup: %" PRIu16 "\n",dispatch_packet->setup);
+	printf("workgroup_size_x: %" PRIu16 "\n",dispatch_packet->workgroup_size_x);
+	printf("workgroup_size_y: %" PRIu16 "\n",dispatch_packet->workgroup_size_y);
+	printf("workgroup_size_z: %" PRIu16 "\n",dispatch_packet->workgroup_size_z);
+	printf("grid_size_x: %" PRIu32 "\n",dispatch_packet->grid_size_x);
+	printf("grid_size_y: %" PRIu32 "\n",dispatch_packet->grid_size_y);
+	printf("grid_size_z: %" PRIu32 "\n",dispatch_packet->grid_size_z);
     /*
      * Increment the write index and ring the doorbell to dispatch the kernel.
      */
@@ -310,6 +323,10 @@ int main(int argc, char **argv) {
      */
     hsa_signal_value_t value = hsa_signal_wait_acquire(signal, HSA_SIGNAL_CONDITION_LT, 1, UINT64_MAX, HSA_WAIT_STATE_BLOCKED);
 
+    printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
+    printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
+    printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
+    
     /*
      * Validate the data in the output buffer.
      */
