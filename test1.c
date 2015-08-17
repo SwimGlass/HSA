@@ -28,7 +28,8 @@
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
 
-#define GLOBAL_SIZE 1024*1024
+//#define GLOBAL_SIZE 1024*1024
+#define GLOBAL_SIZE 10
 #define LOCAL_SIZE 512
 
 #define check(msg, status) \
@@ -39,10 +40,18 @@ if (status != HSA_STATUS_SUCCESS) { \
    printf("%s succeeded.\n", #msg); \
 }
 
+typedef struct float4 {
+	float x;
+	float y;
+	float z;
+	float w;
+} float4;
+
 /*
  * Loads a BRIG module from a specified file. This
  * function does not validate the module.
  */
+
 int load_module_from_file(const char* file_name, hsa_ext_module_t* module) {
     int rc = -1;
     FILE *fp = fopen(file_name, "rb");
@@ -231,6 +240,40 @@ int main(int argc, char **argv) {
     /*
      * Allocate and initialize the kernel arguments and data.
      */
+	
+
+	float *eps,*dt1;
+	float4 *pos;
+	pos= (float4 *)malloc(sizeof(float4));
+	pos->x = 5.0;
+	pos->y = 5.0;
+	pos->z = 5.0;
+	pos->w = 5.0;
+	eps = (float *)malloc(sizeof(float));
+	dt1 = (float *)malloc(sizeof(float));
+	if(eps==NULL || dt1==NULL){
+		printf("Null pointer eps or dt1");
+		return -1;
+	}
+	*eps = 0;
+	*dt1 = 0;
+	err = hsa_memory_register(eps,sizeof(float));
+	err = hsa_memory_register(dt1,sizeof(float));
+	err = hsa_memory_register(pos,sizeof(float4));
+
+	float4 *val;
+	val = (float4 *)malloc(sizeof(float4)*10);
+	int i;
+	for(i=0;i<10;i++){
+		(val+i)->x = 1.0;
+		(val+i)->y = 2.0;
+		(val+i)->z = 3.0;
+		(val+i)->w = 4.0;
+	printf("x:%f\ty:%f\tz:%f\tw:%f\n",val[i].x,val[i].y,val[i].z,val[i].w);
+	}
+	err = hsa_memory_register(val,sizeof(float4)*10);
+	
+	/*
     char* in=(char*)malloc(GLOBAL_SIZE*4);
     memset(in, 1, GLOBAL_SIZE*4);
     err=hsa_memory_register(in, GLOBAL_SIZE*4);
@@ -240,6 +283,7 @@ int main(int argc, char **argv) {
     memset(out, 0, GLOBAL_SIZE*4);
     err=hsa_memory_register(out, GLOBAL_SIZE*4);
     check(Registering argument memory for output parameter, err);
+    */
 
     struct __attribute__ ((aligned(16))) args_t {
        	uint64_t global_offset_0;
@@ -248,16 +292,23 @@ int main(int argc, char **argv) {
 	uint64_t printf_buffer;
 	uint64_t vqueue_pointer;
 	uint64_t aqlwrap_pointer;
-        void* in;
-        void* out;
+        //void* in;
+        //void* out;
+	void* dt1;
+	void* eps;
+	void* pos;
+	void* val;
     } args;
     memset(&args, 0, sizeof(args));
-    args.in=in;
-    args.out=out;
-
-    printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
-    printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
-    printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
+    //args.in=in;
+    //args.out=out;
+	args.dt1=dt1;
+	args.eps=eps;
+	args.pos=pos;
+	args.val=val;
+    //printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
+    //printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
+    //printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
     
     /*
      * Find a memory region that supports kernel arguments.
@@ -303,7 +354,7 @@ int main(int argc, char **argv) {
     dispatch_packet->group_segment_size = group_segment_size;
     __atomic_store_n((uint8_t*)(&dispatch_packet->header), (uint8_t)HSA_PACKET_TYPE_KERNEL_DISPATCH, __ATOMIC_RELEASE);
 
-	printf("\n\nheader: %" PRIu16 "\n",dispatch_packet->header);
+/*	printf("\n\nheader: %" PRIu16 "\n",dispatch_packet->header);
 	printf("setup: %" PRIu16 "\n",dispatch_packet->setup);
 	printf("workgroup_size_x: %" PRIu16 "\n",dispatch_packet->workgroup_size_x);
 	printf("workgroup_size_y: %" PRIu16 "\n",dispatch_packet->workgroup_size_y);
@@ -311,7 +362,8 @@ int main(int argc, char **argv) {
 	printf("grid_size_x: %" PRIu32 "\n",dispatch_packet->grid_size_x);
 	printf("grid_size_y: %" PRIu32 "\n",dispatch_packet->grid_size_y);
 	printf("grid_size_z: %" PRIu32 "\n",dispatch_packet->grid_size_z);
-    /*
+*/
+	/*
      * Increment the write index and ring the doorbell to dispatch the kernel.
      */
     hsa_queue_store_write_index_relaxed(queue, index+1);
@@ -323,30 +375,18 @@ int main(int argc, char **argv) {
      */
     hsa_signal_value_t value = hsa_signal_wait_acquire(signal, HSA_SIGNAL_CONDITION_LT, 1, UINT64_MAX, HSA_WAIT_STATE_BLOCKED);
 
-    printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
-    printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
-    printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
+  //  printf("\n\nglobal_offset_0: %" PRIu64 "\n",args.global_offset_0);
+   // printf("global_offset_1: %" PRIu64 "\n",args.global_offset_1);
+   // printf("global_offset_2: %" PRIu64 "\n",args.global_offset_2);
     
-    /*
-     * Validate the data in the output buffer.
-     */
-    int valid=1;
-    int fail_index=0;
-    for(int i=0; i<GLOBAL_SIZE; i++) {
-        if(out[i]!=in[i]) {
-	    fail_index=i;
-            valid=0;
-            break;
-        }
-    }
+    
+	printf("\n\n%f\t\t%f\n\n",*dt1,*eps);
+	printf("\n\n%f\t\t%f\t\t%f\t\t%f\n\n",pos->x,pos->y,pos->z,pos->w);
+	for(i=0;i<10;i++){
+		printf("x:%f\ty:%f\tz:%f\tw:%f\n",val[i].x,val[i].y,val[i].z,val[i].w);
+	}
 
-    if(valid) {
-        printf("Passed validation.\n");
-    } else {
-        printf("VALIDATION FAILED!\nBad index: %d\n", fail_index);
-    }
-
-    /*
+	/*
      * Cleanup all allocated resources.
      */
     err=hsa_signal_destroy(signal);
@@ -364,8 +404,8 @@ int main(int argc, char **argv) {
     err=hsa_shut_down();
     check(Shutting down the runtime, err);
 
-    free(in);
-    free(out);
+    //free(in);
+    //free(out);
 
     return 0;
 }

@@ -1,4 +1,4 @@
-module &_tmp_cloc4779_test1_opt_bc:1:0:$full:$large:$default;
+module &_tmp_cloc4849_test1_opt_bc:1:0:$full:$large:$default;
 extension "amd:gcn";
 extension "IMAGE";
 
@@ -11,8 +11,10 @@ prog kernel &__OpenCL_vector_copy_kernel(
 	kernarg_u64 %__printf_buffer,
 	kernarg_u64 %__vqueue_pointer,
 	kernarg_u64 %__aqlwrap_pointer,
-	kernarg_u64 %in,
-	kernarg_u64 %out)
+	kernarg_u64 %dt1,
+	kernarg_u64 %eps,
+	kernarg_u64 %pos,
+	kernarg_u64 %val)
 {
 	pragma "AMD RTI", "ARGSTART:__OpenCL_vector_copy_kernel";
 	pragma "AMD RTI", "version:3:1:104";
@@ -27,8 +29,10 @@ prog kernel &__OpenCL_vector_copy_kernel(
 	pragma "AMD RTI", "pointer:__printf_buffer:u8:1:1:48:uav:7:1:RW:0:0:0";
 	pragma "AMD RTI", "value:__vqueue_pointer:u64:1:1:64";
 	pragma "AMD RTI", "value:__aqlwrap_pointer:u64:1:1:80";
-	pragma "AMD RTI", "pointer:in:u32:1:1:96:uav:7:4:RW:0:0:0";
-	pragma "AMD RTI", "pointer:out:u32:1:1:112:uav:7:4:RW:0:0:0";
+	pragma "AMD RTI", "pointer:dt1:float:1:1:96:uav:7:4:RW:0:0:0";
+	pragma "AMD RTI", "pointer:eps:float:1:1:112:uav:7:4:RW:0:0:0";
+	pragma "AMD RTI", "pointer:pos:float:1:1:128:uav:7:16:RW:0:0:0";
+	pragma "AMD RTI", "pointer:val:float:1:1:144:uav:7:16:RW:0:0:0";
 	pragma "AMD RTI", "function:1:0";
 	pragma "AMD RTI", "memory:64bitABI";
 	pragma "AMD RTI", "privateid:8";
@@ -40,24 +44,29 @@ prog kernel &__OpenCL_vector_copy_kernel(
 	pragma "AMD RTI", "reflection:3:size_t";
 	pragma "AMD RTI", "reflection:4:size_t";
 	pragma "AMD RTI", "reflection:5:size_t";
-	pragma "AMD RTI", "reflection:6:int*";
-	pragma "AMD RTI", "reflection:7:int*";
+	pragma "AMD RTI", "reflection:6:float*";
+	pragma "AMD RTI", "reflection:7:float*";
+	pragma "AMD RTI", "reflection:8:float4*";
+	pragma "AMD RTI", "reflection:9:float4*";
 	pragma "AMD RTI", "ARGEND:__OpenCL_vector_copy_kernel";
 
 @__OpenCL_vector_copy_kernel_entry:
 	// BB#0:
+	ld_kernarg_align(8)_width(all)_u64	$d0, [%dt1];
+	st_global_align(4)_u32	1078355558, [$d0];
+	ld_kernarg_align(8)_width(all)_u64	$d0, [%eps];
+	st_global_align(4)_u32	1074161254, [$d0];
 	workitemabsid_u32	$s0, 0;
+	ld_kernarg_align(8)_width(all)_u64	$d0, [%pos];
+	st_v3_global_align(16)_u32	(1120403456, 1123418112, 1128792064), [$d0];
 	cvt_u64_u32	$d0, $s0;
 	ld_kernarg_align(8)_width(all)_u64	$d1, [%__global_offset_0];
 	add_u64	$d0, $d0, $d1;
 	shl_u64	$d0, $d0, 32;
 	shr_s64	$d0, $d0, 32;
-	shl_u64	$d0, $d0, 2;
-	ld_kernarg_align(8)_width(all)_u64	$d1, [%out];
-	add_u64	$d1, $d1, $d0;
-	ld_kernarg_align(8)_width(all)_u64	$d2, [%in];
-	add_u64	$d0, $d2, $d0;
-	ld_global_align(4)_u32	$s0, [$d0];
-	st_global_align(4)_u32	$s0, [$d1];
+	shl_u64	$d0, $d0, 4;
+	ld_kernarg_align(8)_width(all)_u64	$d1, [%val];
+	add_u64	$d0, $d1, $d0;
+	st_v4_global_align(16)_u32	(1073741824, 1073741824, 1073741824, 1073741824), [$d0];
 	ret;
 };

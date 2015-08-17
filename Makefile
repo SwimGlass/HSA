@@ -4,7 +4,7 @@ endif
 
 TEST_NAME=test1
 LFLAGS= -g  -Wl,--unresolved-symbols=ignore-in-shared-libs
-INCS = -I $(HSA_RUNTIME_PATH)/include
+INCS = -g -I $(HSA_RUNTIME_PATH)/include
 C_FILES := $(wildcard *.c)
 OBJ_FILES := $(addprefix obj/, $(notdir $(C_FILES:.c=.o)))
 
